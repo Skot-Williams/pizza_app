@@ -1,0 +1,47 @@
+{# templates/order_view.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}View Order{% endblock %}
+
+{% block body %}
+    <div class="row mt-2">
+        <div class="col">
+            <h1 class="d-flex justify-content-between">
+                <span>
+                    View an Order
+                </span>
+                <span>
+                    <a class="btn btn-info" href="{{ url('orderOverview') }}">Back to Orders</a>
+                </span>
+            </h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    Order {{ order.getid }}
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Pizzas:</strong></li>
+                    {% for pizza in pizzas %}
+                        <li class="list-group-item d-flex justify-content-between">{{ pizza.getName }} <span>&pound;{{ pizza.cost.itemCost }}</span></li>
+                    {% endfor %}
+                    <li class="list-group-item"><strong>Extras:</strong></li>
+                    {% for extra in extras %}
+                        <li class="list-group-item d-flex justify-content-between">{{ extra.getName }}  <span>&pound;{{ extra.getExtraCost }}</li>
+                    {% endfor %}
+                </ul>
+                <div class="card-footer">
+                    <p><strong>Order Total: </strong>&pound;{{ totalPrice }}</p>
+                    {% if (order.getDeliveryMethodId  is not null) %}
+                        <p>Delivery Type: {{ order.getDeliveryMethodId.getMethodName }}</p>
+                    {% endif %}
+                    {% if (order.getDeliveryDriverId  is not null) %}
+                        <p>Delivered By: {{ order.getDeliveryDriverId.getFirstName }} {{ order.getDeliveryDriverId.getLastName }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

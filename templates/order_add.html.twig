@@ -1,0 +1,163 @@
+{# templates/order_overview.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Add Order{% endblock %}
+
+{% block body %}
+    <div class="row mt-2">
+        <div class="col">
+            <h1 class="d-flex justify-content-between">
+                <span>
+                    Create an Order
+                </span>
+                <span>
+                    <a class="btn btn-info" href="{{ url('orderOverview') }}">Back to Orders</a>
+                </span>
+            </h1>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col">
+            <div class="form-group">
+                <label for="add-pizza">Add Pizza:</label>
+                <select id="add-pizza" class="form-control js-order-option" name="pizzas">
+                    <option value="0">Select a Pizza</option>
+                    {% for pizza in pizzas %}
+                        <option value="{{ pizza.id }}">{{ pizza.name }} - &pound;{{ pizza.getCost.getItemCost }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-success set-option" data-type="pizza" href="#">Add Pizza to order</a>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="form-group">
+                <label for="add-extra">Add Extra:</label>
+                <select id="add-extra" class="form-control js-order-option" name="extras">
+                    <option value="0">Select an Extra</option>
+                    {% for extra in extras %}
+                        <option value="{{ extra.id }}">{{ extra.getName }} - &pound;{{ extra.getExtraCost }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-success set-option" data-type="extra" href="#">Add Extra to Order</a>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="form-group">
+                <label for="add-delivery">Delivery:</label>
+                <select id="add-delivery" class="form-control js-order-option" name="delivery">
+                    <option value="0">Select Delivery Method</option>
+                    {% for deliveryMethod in deliveryMethods %}
+                        <option value="{{ deliveryMethod.id }}">{{ deliveryMethod.getMethodName }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-success set-option" data-type="delivery" href="#">Set Delivery</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="delivery-drivers" class="row mt-3" style="display: none;">
+        <div class="col">
+            <div class="form-group">
+                <label for="add-driver">Set Driver:</label>
+                <select id="add-driver" class="form-control js-order-option" name="driver">
+                    <option value="0">Select a Driver</option>
+                    {% for driver in drivers %}
+                        <option value="{{ driver.id }}">{{ driver.getFirstName }} {{ driver.getLastName }}</option>
+                    {% endfor %}
+                </select>
+                <a class="btn btn-success set-option" data-type="driver" href="#">Set Driver</a>
+            </div>
+        </div>
+    </div>
+
+    <form>
+        <input id="order-id" type="hidden" name="order-id" value="" />
+        <input id="order-total-amount" type="hidden" name="order-total" value="" />
+
+        <div class="row mt-5">
+            <div class="col">
+                <div class="card" style="">
+                    <div class="card-header">
+                        Order Items
+                    </div>
+                    <ul id="order-items" class="list-group list-group-flush"></ul>
+                    <div class="card-footer">
+                        <p><span id="delivery-method">Delivery: <span class="value"></span></span></p>
+                        <p><span id="order-total">Order Total: <span class="value"></span></span></p>
+                        <p id="js-delivery-driver-wrapper" style="display: none;"><span id="js-delivery-driver">Delivered By: <span class="value"></span></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+        $(function() {
+            $('.set-option').click(function() {
+                let orderId = $('#order-id').val();
+                let optionType = $(this).data('type');
+                let optionId = $('#add-'+optionType).val();
+
+                addOptionToOrder(orderId, optionType, optionId);
+            });
+
+            /* TODO: check delivery type on selection instead of hard coding values */
+            $('#add-delivery').change(function() {
+                if (3 === parseInt($(this).val()) || 4 === parseInt($(this).val())) {
+                    $('#delivery-drivers').show();
+                } else {
+                    $('#delivery-drivers').hide();
+                }
+            });
+        });
+
+        function addOptionToOrder(orderId, optionType, optionId) {
+            let orderTotal = $('#order-total-amount').val();
+
+            $.ajax({
+                url: '{{ url('addOrderOption') }}',
+                type: 'POST',
+                data: {
+                    'orderId': orderId,
+                    'optionType': optionType,
+                    'optionId': optionId
+                },
+                success: function (response) {
+                    // set order ID
+                    $('#order-id').val(response.orderId);
+
+                    // Option is Driver
+                    if ('driver' === response.optionType && undefined !== typeof response.data.driverName) {
+                        $('#js-delivery-driver-wrapper').show();
+                        $('#js-delivery-driver .value').html(response.data.driverName);
+
+                        return;
+                    }
+
+                    // Add item to order
+                    if ('delivery' !== response.optionType) {
+                        $('#order-items').append(
+                            '<li class="list-group-item d-flex justify-content-between">' + response.data.name + '' +
+                            '<span>&pound;' + response.data.price + '</span></li>'
+                        );
+                    } else {
+                        $('#delivery-method .value').html(response.data.name + ' (+ ' + response.data.price + ')');
+                    }
+
+                    // Increment order total
+                    orderTotal = +orderTotal + +response.data.price;
+                    $('#order-total-amount').val(orderTotal);
+                    $('#order-total .value').html('&pound;' + orderTotal);
+                },
+                error: function () {
+                    return 'There was an issue fetching option data.';
+                }
+            });
+        }
+    </script>
+{% endblock %}

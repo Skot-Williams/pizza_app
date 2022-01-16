@@ -1,0 +1,27 @@
+{# templates/order_overview.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Order Overview{% endblock %}
+
+{% block body %}
+    <div class="row mt-2">
+        <div class="col">
+            <h1>Orders overview</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    Orders
+                </div>
+                <ul class="list-group list-group-flush">
+                    {%  for order in orders %}
+                        <li class="list-group-item"><a href="{{ url('orderView', {'orderId': order.id}) }}">{{ order.id }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <a class="btn btn-success" href="{{ url('addOrder') }}">Create Order</a>
+        </div>
+    </div>
+{% endblock %}
